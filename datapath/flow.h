@@ -49,6 +49,7 @@ struct ovs_key_ipv4_tunnel {
 	__be16 tun_flags;
 	u8   ipv4_tos;
 	u8   ipv4_ttl;
+	bool is_layer3;
 } __packed __aligned(4); /* Minimize padding. */
 
 static inline void ovs_flow_tun_key_init(struct ovs_key_ipv4_tunnel *tun_key,

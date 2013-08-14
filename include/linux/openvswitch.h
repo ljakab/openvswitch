@@ -330,6 +330,7 @@ enum ovs_tunnel_key_attr {
 	OVS_TUNNEL_KEY_ATTR_TTL,		/* u8 Tunnel IP TTL. */
 	OVS_TUNNEL_KEY_ATTR_DONT_FRAGMENT,	/* No argument, set DF. */
 	OVS_TUNNEL_KEY_ATTR_CSUM,		/* No argument. CSUM packet. */
+	OVS_TUNNEL_KEY_ATTR_LAYER3,		/* No argument. Layer 3 tunnel. */
 	__OVS_TUNNEL_KEY_ATTR_MAX
 };
 
@@ -558,6 +559,16 @@ struct ovs_action_recirc {
 };
 
 /**
+ * struct ovs_action_push_eth - %OVS_ACTION_ATTR_PUSH_ETH action argument.
+ * @addresses: Source and destination MAC addresses.
+ * @eth_type: Ethernet type
+ */
+struct ovs_action_push_eth {
+	struct ovs_key_ethernet addresses;
+	__be16	 eth_type;
+};
+
+/**
  * enum ovs_action_attr - Action types.
  *
  * @OVS_ACTION_ATTR_OUTPUT: Output packet to port.
@@ -598,6 +609,8 @@ enum ovs_action_attr {
 	OVS_ACTION_ATTR_PUSH_MPLS,    /* struct ovs_action_push_mpls. */
 	OVS_ACTION_ATTR_POP_MPLS,     /* __be16 ethertype. */
 	OVS_ACTION_ATTR_RECIRC,	      /* struct ovs_action_recirc. */
+	OVS_ACTION_ATTR_PUSH_ETH,     /* struct ovs_action_push_eth. */
+	OVS_ACTION_ATTR_POP_ETH,      /* No argument. */
 	__OVS_ACTION_ATTR_MAX
 };
 

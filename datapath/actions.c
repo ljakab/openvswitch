@@ -143,6 +143,29 @@ static int set_eth_addr(struct sk_buff *skb,
 	return 0;
 }
 
+static int pop_eth(struct sk_buff *skb)
+{
+	skb_pull(skb, skb_network_offset(skb));
+	return 0;
+}
+
+static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
+{
+	int err;
+
+	skb_push(skb, ETH_HLEN);
+
+	err = set_eth_addr(skb, &ethh->addresses);
+	if (unlikely(err))
+		return err;
+
+	eth_hdr(skb)->h_proto = ethh->eth_type;
+
+	ovs_skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
+
+	return 0;
+}
+
 static void set_ip_addr(struct sk_buff *skb, struct iphdr *nh,
 				__be32 *addr, __be32 new_addr)
 {
@@ -544,6 +567,14 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 
 		case OVS_ACTION_ATTR_POP_VLAN:
 			err = pop_vlan(skb);
+			break;
+
+		case OVS_ACTION_ATTR_PUSH_ETH:
+			err = push_eth(skb, nla_data(a));
+			break;
+
+		case OVS_ACTION_ATTR_POP_ETH:
+			err = pop_eth(skb);
 			break;
 
 		case OVS_ACTION_ATTR_SET:
