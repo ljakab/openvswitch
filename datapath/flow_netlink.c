@@ -389,9 +389,6 @@ static int ipv4_tun_from_nlattr(const struct nlattr *attr,
 		case OVS_TUNNEL_KEY_ATTR_CSUM:
 			tun_flags |= TUNNEL_CSUM;
 			break;
-		case OVS_TUNNEL_KEY_ATTR_LAYER3:
-			tun_key->is_layer3 = true;
-			break;
 		default:
 			return -EINVAL;
 		}
@@ -448,9 +445,6 @@ static int ipv4_tun_to_nlattr(struct sk_buff *skb,
 		return -EMSGSIZE;
 	if ((output->tun_flags & TUNNEL_CSUM) &&
 		nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_CSUM))
-		return -EMSGSIZE;
-	if ((tun_key->is_layer3) &&
-		nla_put_flag(skb, OVS_TUNNEL_KEY_ATTR_LAYER3))
 		return -EMSGSIZE;
 
 	nla_nest_end(skb, nla);
@@ -911,7 +905,7 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 	if (nla_put_u32(skb, OVS_KEY_ATTR_SKB_MARK, output->phy.skb_mark))
 		goto nla_put_failure;
 
-	if (swkey->tun_key.is_layer3)
+	if (swkey->noeth)
 		goto noethernet;
 
 	nla = nla_reserve(skb, OVS_KEY_ATTR_ETHERNET, sizeof(*eth_key));
