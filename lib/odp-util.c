@@ -75,6 +75,8 @@ odp_action_len(uint16_t type)
     switch ((enum ovs_action_attr) type) {
     case OVS_ACTION_ATTR_OUTPUT: return sizeof(uint32_t);
     case OVS_ACTION_ATTR_USERSPACE: return -2;
+    case OVS_ACTION_ATTR_PUSH_ETH: return sizeof(struct ovs_action_push_eth);
+    case OVS_ACTION_ATTR_POP_ETH: return 0;
     case OVS_ACTION_ATTR_PUSH_VLAN: return sizeof(struct ovs_action_push_vlan);
     case OVS_ACTION_ATTR_POP_VLAN: return 0;
     case OVS_ACTION_ATTR_PUSH_MPLS: return sizeof(struct ovs_action_push_mpls);
@@ -404,6 +406,7 @@ format_odp_action(struct ds *ds, const struct nlattr *a)
 {
     int expected_len;
     enum ovs_action_attr type = nl_attr_type(a);
+    const struct ovs_action_push_eth *eth;
     const struct ovs_action_push_vlan *vlan;
 
     expected_len = odp_action_len(nl_attr_type(a));
@@ -428,6 +431,15 @@ format_odp_action(struct ds *ds, const struct nlattr *a)
         ds_put_cstr(ds, "set(");
         format_odp_key_attr(nl_attr_get(a), NULL, NULL, ds, true);
         ds_put_cstr(ds, ")");
+        break;
+    case OVS_ACTION_ATTR_PUSH_ETH:
+        eth = nl_attr_get(a);
+        ds_put_format(ds, "push_eth(src="ETH_ADDR_FMT",dst="ETH_ADDR_FMT
+            ",type=0x%04"PRIx16")", ETH_ADDR_ARGS(eth->addresses.eth_src),
+            ETH_ADDR_ARGS(eth->addresses.eth_dst), ntohs(eth->eth_type));
+        break;
+    case OVS_ACTION_ATTR_POP_ETH:
+        ds_put_cstr(ds, "pop_eth");
         break;
     case OVS_ACTION_ATTR_PUSH_VLAN:
         vlan = nl_attr_get(a);
