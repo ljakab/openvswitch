@@ -435,8 +435,10 @@ format_odp_action(struct ds *ds, const struct nlattr *a)
     case OVS_ACTION_ATTR_PUSH_ETH:
         eth = nl_attr_get(a);
         ds_put_format(ds, "push_eth(src="ETH_ADDR_FMT",dst="ETH_ADDR_FMT
-            ",type=0x%04"PRIx16")", ETH_ADDR_ARGS(eth->addresses.eth_src),
-            ETH_ADDR_ARGS(eth->addresses.eth_dst), ntohs(eth->eth_type));
+                      ",type=0x%04"PRIx16")",
+                      ETH_ADDR_ARGS(eth->addresses.eth_src),
+                      ETH_ADDR_ARGS(eth->addresses.eth_dst),
+                      ntohs(eth->eth_type));
         break;
     case OVS_ACTION_ATTR_POP_ETH:
         ds_put_cstr(ds, "pop_eth");
