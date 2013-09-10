@@ -249,7 +249,6 @@ static int lisp_rcv(struct sock *sk, struct sk_buff *skb)
 	default:
 		goto error;
 	}
-	skb->protocol = protocol;
 
 	ovs_vport_receive(vport_from_priv(lisp_port), skb, &tun_key);
 	goto out;
