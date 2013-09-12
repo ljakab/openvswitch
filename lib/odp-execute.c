@@ -216,12 +216,14 @@ odp_execute_actions__(void *dp, struct ofpbuf *packet, bool steal,
             break;
 
         case OVS_ACTION_ATTR_PUSH_ETH: {
-            /* TODO */
+            const struct ovs_action_push_eth *eth = nl_attr_get(a);
+            push_eth(packet, eth->addresses.eth_dst, eth->addresses.eth_src,
+                     eth->eth_type);
             break;
         }
 
         case OVS_ACTION_ATTR_POP_ETH: {
-            /* TODO */
+            pop_eth(packet);
             break;
         }
 

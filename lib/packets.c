@@ -218,6 +218,21 @@ eth_pop_vlan(struct ofpbuf *packet)
     }
 }
 
+/* Push Ethernet header */
+void
+push_eth(struct ofpbuf *packet, const uint8_t dst[ETH_ADDR_LEN],
+         const uint8_t src[ETH_ADDR_LEN], ovs_be16 type)
+{
+    /* TODO */
+}
+
+/* Pop Ethernet header */
+void
+pop_eth(struct ofpbuf *packet)
+{
+    /* TODO */
+}
+
 /* Set ethertype of the packet. */
 static void
 set_ethertype(struct ofpbuf *packet, ovs_be16 eth_type)
