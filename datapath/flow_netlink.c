@@ -1423,6 +1423,8 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 		static const u32 action_lens[OVS_ACTION_ATTR_MAX + 1] = {
 			[OVS_ACTION_ATTR_OUTPUT] = sizeof(u32),
 			[OVS_ACTION_ATTR_USERSPACE] = (u32)-1,
+			[OVS_ACTION_ATTR_PUSH_ETH] = sizeof(struct ovs_action_push_eth),
+			[OVS_ACTION_ATTR_POP_ETH] = 0,
 			[OVS_ACTION_ATTR_PUSH_VLAN] = sizeof(struct ovs_action_push_vlan),
 			[OVS_ACTION_ATTR_POP_VLAN] = 0,
 			[OVS_ACTION_ATTR_SET] = (u32)-1,
@@ -1453,6 +1455,13 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 				return -EINVAL;
 			break;
 
+
+		case OVS_ACTION_ATTR_POP_ETH:
+			break;
+
+		case OVS_ACTION_ATTR_PUSH_ETH:
+			/* TODO May need to validate eth_type? */
+			break;
 
 		case OVS_ACTION_ATTR_POP_VLAN:
 			break;

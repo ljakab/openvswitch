@@ -592,7 +592,8 @@ type_run(const char *type)
                                  ofport->bfd, ofport->peer, stp_port,
                                  ofport->qdscp, ofport->n_qdscp,
                                  ofport->up.pp.config, ofport->up.pp.state,
-                                 ofport->is_tunnel, ofport->may_enable);
+                                 ofport->is_tunnel, ofport->may_enable,
+                                 ofport->is_layer3);
             }
             ovs_rwlock_unlock(&xlate_rwlock);
         }
@@ -1479,9 +1480,7 @@ port_construct(struct ofport *port_)
         return 0;
     }
 
-    if (netdev_vport_is_layer3(netdev)) {
-        port->is_layer3 = true;
-    }
+    port->is_layer3 = netdev_vport_is_layer3(netdev);
 
     error = dpif_port_query_by_name(ofproto->backer->dpif,
                                     netdev_vport_get_dpif_port(netdev, namebuf,
