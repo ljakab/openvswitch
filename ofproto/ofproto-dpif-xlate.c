@@ -1434,7 +1434,7 @@ xlate_normal(struct xlate_ctx *ctx)
     }
 
     /* Learn source MAC. */
-    if (ctx->xin->may_learn) {
+    if (ctx->xin->may_learn && !(in_port->is_layer3)) {
         update_learning_table(ctx->xbridge, flow, wc, vlan, in_xbundle);
     }
 
