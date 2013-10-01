@@ -3368,9 +3368,6 @@ odp_flow_key_to_flow__(const struct nlattr *key, size_t key_len,
             expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
         }
     }
-    if (!is_mask) {
-        expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
-    }
 
     /* Get Ethertype or 802.1Q TPID or FLOW_DL_TYPE_NONE. */
     if (!parse_ethertype(attrs, present_attrs, &expected_attrs, flow,

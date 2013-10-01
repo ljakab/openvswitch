@@ -109,7 +109,7 @@ static u16 range_n_bytes(const struct sw_flow_key_range *range)
 static bool match_validate(const struct sw_flow_match *match,
 			   u64 key_attrs, u64 mask_attrs)
 {
-	u64 key_expected = 1ULL << OVS_KEY_ATTR_ETHERNET;
+	u64 key_expected = 0;
 	u64 mask_allowed = key_attrs;  /* At most allow all key attributes */
 
 	/* The following mask attributes allowed only if they
