@@ -128,6 +128,7 @@ static bool match_validate(const struct sw_flow_match *match,
 	/* Always allowed mask fields. */
 	mask_allowed |= ((1ULL << OVS_KEY_ATTR_TUNNEL)
 		       | (1ULL << OVS_KEY_ATTR_IN_PORT)
+		       | (1ULL << OVS_KEY_ATTR_ETHERNET)
 		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE));
 
 	/* Check key attributes. */
