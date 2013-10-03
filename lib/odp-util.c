@@ -434,10 +434,10 @@ format_odp_action(struct ds *ds, const struct nlattr *a)
         break;
     case OVS_ACTION_ATTR_PUSH_ETH:
         eth = nl_attr_get(a);
-        ds_put_format(ds, "push_eth(dst="ETH_ADDR_FMT",src="ETH_ADDR_FMT
+        ds_put_format(ds, "push_eth(src="ETH_ADDR_FMT",dst="ETH_ADDR_FMT
                       ",type=0x%04"PRIx16")",
-                      ETH_ADDR_ARGS(eth->addresses.eth_dst),
                       ETH_ADDR_ARGS(eth->addresses.eth_src),
+                      ETH_ADDR_ARGS(eth->addresses.eth_dst),
                       ntohs(eth->eth_type));
         break;
     case OVS_ACTION_ATTR_POP_ETH:
@@ -640,6 +640,31 @@ parse_odp_action(const char *s, const struct simap *port_names,
         }
         nl_msg_end_nested(actions, start_ofs);
         return retval + 5;
+    }
+
+    {
+        struct ovs_action_push_eth push;
+        int eth_type = 0;
+        int n = -1;
+
+        if (sscanf(s, "push_eth(src="ETH_ADDR_SCAN_FMT","
+                   "dst="ETH_ADDR_SCAN_FMT",type=%i)%n",
+                   ETH_ADDR_SCAN_ARGS(push.addresses.eth_src),
+                   ETH_ADDR_SCAN_ARGS(push.addresses.eth_dst),
+                   &eth_type, &n) > 0 && n > 0) {
+
+            push.eth_type = htons(eth_type);
+
+            nl_msg_put_unspec(actions, OVS_ACTION_ATTR_PUSH_ETH,
+                              &push, sizeof push);
+
+            return n;
+        }
+    }
+
+    if (!strncmp(s, "pop_eth", 7)) {
+        nl_msg_put_flag(actions, OVS_ACTION_ATTR_POP_ETH);
+        return 7;
     }
 
     {
