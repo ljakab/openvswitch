@@ -154,6 +154,7 @@ static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
 	int err;
 
 	skb_push(skb, ETH_HLEN);
+	skb_reset_mac_header(skb);
 
 	err = set_eth_addr(skb, &ethh->addresses);
 	if (unlikely(err))
