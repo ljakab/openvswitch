@@ -558,6 +558,13 @@ netdev_rx_recv(struct netdev_rx *rx, struct ofpbuf *buffer)
         if (buffer->size < ETH_TOTAL_MIN) {
             ofpbuf_put_zeros(buffer, ETH_TOTAL_MIN - buffer->size);
         }
+
+        /* We only receive layer 3 packets in netdev-vport, which doesn't
+         * implement an 'rx_recv' function and correctly setting the
+         * 'buffer->l3' pointer is dealt with elsewhere.  We expect all
+         * packets received here to be layer 2.
+         */
+        buffer->l2 = buffer->data;
         return 0;
     } else {
         return -retval;

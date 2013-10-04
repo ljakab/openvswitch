@@ -417,6 +417,8 @@ eth_from_hex(const char *hex, struct ofpbuf **packetp)
         return "Packet data too short for Ethernet";
     }
 
+    packet->l2 = packet->data;
+
     return NULL;
 }
 

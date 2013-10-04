@@ -1479,6 +1479,15 @@ parse_odp_packet(struct ofpbuf *buf, struct dpif_upcall *upcall,
     upcall->packet.data = (char *)upcall->packet.data + sizeof(struct nlattr);
     upcall->packet.size = nl_attr_get_size(a[OVS_PACKET_ATTR_PACKET]);
 
+    /* Set the correct layer based on the presence of OVS_KEY_ATTR_ETHERNET */
+    if (nl_attr_find__(upcall->key, upcall->key_len, OVS_KEY_ATTR_ETHERNET)) {
+        upcall->packet.l2 = upcall->packet.data;
+        upcall->packet.l3 = NULL;
+    } else {
+        upcall->packet.l2 = NULL;
+        upcall->packet.l3 = upcall->packet.data;
+    }
+
     *dp_ifindex = ovs_header->dp_ifindex;
 
     return 0;

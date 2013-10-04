@@ -135,6 +135,7 @@ struct xport {
 
     bool may_enable;                 /* May be enabled in bonds. */
     bool is_tunnel;                  /* Is a tunnel port. */
+    bool is_layer3;                  /* Is a layer 3 port. */
 
     struct cfm *cfm;                 /* CFM handle or null. */
     struct bfd *bfd;                 /* BFD handle or null. */
@@ -406,7 +407,7 @@ xlate_ofport_set(struct ofproto_dpif *ofproto, struct ofbundle *ofbundle,
                  const struct ofproto_port_queue *qdscp_list, size_t n_qdscp,
                  enum ofputil_port_config config,
                  enum ofputil_port_state state, bool is_tunnel,
-                 bool may_enable)
+                 bool may_enable, bool is_layer3)
 {
     struct xport *xport = xport_lookup(ofport);
     size_t i;
@@ -430,6 +431,7 @@ xlate_ofport_set(struct ofproto_dpif *ofproto, struct ofbundle *ofbundle,
     xport->stp_port_no = stp_port_no;
     xport->is_tunnel = is_tunnel;
     xport->may_enable = may_enable;
+    xport->is_layer3 = is_layer3;
     xport->odp_port = odp_port;
 
     if (xport->netdev != netdev) {
@@ -1426,7 +1428,7 @@ xlate_normal(struct xlate_ctx *ctx)
     }
 
     /* Learn source MAC. */
-    if (ctx->xin->may_learn) {
+    if (ctx->xin->may_learn && !(in_port->is_layer3)) {
         update_learning_table(ctx->xbridge, flow, wc, vlan, in_xbundle);
     }
 
@@ -1679,6 +1681,7 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
     const struct xport *xport = get_ofp_port(ctx->xbridge, ofp_port);
     struct flow_wildcards *wc = &ctx->xout->wc;
     struct flow *flow = &ctx->xin->flow;
+    const struct xport *in_xport = get_ofp_port(ctx->xbridge, flow->in_port.ofp_port);
     ovs_be16 flow_vlan_tci;
     uint32_t flow_pkt_mark;
     uint8_t flow_nw_tos;
@@ -1687,7 +1690,7 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
 
     /* If 'struct flow' gets additional metadata, we'll need to zero it out
      * before traversing a patch port. */
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 23);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 24);
 
     if (!xport) {
         xlate_report(ctx, "Nonexistent output port");
@@ -1703,6 +1706,16 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
     if (mbridge_has_mirrors(ctx->xbridge->mbridge) && xport->xbundle) {
         ctx->xout->mirrors |= xbundle_mirror_dst(xport->xbundle->xbridge,
                                                  xport->xbundle);
+    }
+
+    if ((in_xport) && !(in_xport->is_layer3) && xport->is_layer3) {
+        odp_put_pop_eth_action(&ctx->xout->odp_actions);
+    }
+
+    if (flow->base_layer == LAYER_3 && !(xport->is_layer3)) {
+        flow->base_layer = LAYER_2;
+        odp_put_push_eth_action(&ctx->xout->odp_actions, flow->dl_src,
+                                flow->dl_dst, flow->dl_type);
     }
 
     if (xport->peer) {

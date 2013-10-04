@@ -236,7 +236,7 @@ const struct mf_field mf_fields[MFF_N_IDS] = {
         MF_FIELD_SIZES(mac),
         MFM_FULLY,
         MFS_ETHERNET,
-        MFP_NONE,
+        MFP_ETHERNET,
         true,
         NXM_OF_ETH_SRC, "NXM_OF_ETH_SRC",
         OXM_OF_ETH_SRC, "OXM_OF_ETH_SRC",
@@ -248,7 +248,7 @@ const struct mf_field mf_fields[MFF_N_IDS] = {
         MF_FIELD_SIZES(mac),
         MFM_FULLY,
         MFS_ETHERNET,
-        MFP_NONE,
+        MFP_ETHERNET,
         true,
         NXM_OF_ETH_DST, "NXM_OF_ETH_DST",
         OXM_OF_ETH_DST, "OXM_OF_ETH_DST",
@@ -1041,6 +1041,8 @@ mf_are_prereqs_ok(const struct mf_field *mf, const struct flow *flow)
     case MFP_NONE:
         return true;
 
+    case MFP_ETHERNET:
+        return flow->base_layer == LAYER_2;
     case MFP_ARP:
       return (flow->dl_type == htons(ETH_TYPE_ARP) ||
               flow->dl_type == htons(ETH_TYPE_RARP));
@@ -1117,6 +1119,9 @@ mf_mask_field_and_prereqs(const struct mf_field *mf, struct flow *mask)
         break;
     case MFP_VLAN_VID:
         mask->vlan_tci |= htons(VLAN_CFI);
+        break;
+    case MFP_ETHERNET:
+        mask->base_layer = 0xff;
         break;
     case MFP_NONE:
         break;

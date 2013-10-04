@@ -49,6 +49,21 @@ const uint8_t flow_segment_u32s[4] = {
     FLOW_U32S
 };
 
+static ovs_be16
+get_l3_eth_type(struct ofpbuf *packet)
+{
+    struct ip_header *ip = packet->l3;
+    int ip_ver = IP_VER(ip->ip_ihl_ver);
+    switch (ip_ver) {
+    case 4:
+        return htons(ETH_TYPE_IP);
+    case 6:
+        return htons(ETH_TYPE_IPV6);
+    default:
+        return 0;
+    }
+}
+
 static struct arp_eth_header *
 pull_arp(struct ofpbuf *packet)
 {
@@ -363,17 +378,14 @@ invalid:
 }
 
 /* Initializes 'flow' members from 'packet', 'skb_priority', 'tnl', and
- * 'in_port'.
+ * 'in_port'.  Expects at least one of packet->l2 or packet->l3 to be set for
+ * indicating packet type. For layer 3 packets, packet->l2 must be NULL and
+ * packet->l3 set to the beginning of the layer 3 header.
  *
  * Initializes 'packet' header pointers as follows:
  *
- *    - packet->l2 to the start of the Ethernet header.
- *
- *    - packet->l2_5 to the start of the MPLS shim header.
- *
- *    - packet->l3 to just past the Ethernet header, or just past the
- *      vlan_header if one is present, to the first byte of the payload of the
- *      Ethernet frame.
+ *    - packet->l2_5 to the start of the MPLS shim header, if one is present
+ *      and packet->l2 is non-NULL
  *
  *    - packet->l4 to just past the IPv4 header, if one is present and has a
  *      correct length, and otherwise NULL.
@@ -391,6 +403,8 @@ flow_extract(struct ofpbuf *packet, uint32_t skb_priority, uint32_t pkt_mark,
 
     COVERAGE_INC(flow_extract);
 
+    ovs_assert(packet->l2 != NULL || packet->l3 != NULL);
+
     memset(flow, 0, sizeof *flow);
 
     if (tnl) {
@@ -403,36 +417,47 @@ flow_extract(struct ofpbuf *packet, uint32_t skb_priority, uint32_t pkt_mark,
     flow->skb_priority = skb_priority;
     flow->pkt_mark = pkt_mark;
 
-    packet->l2   = b.data;
     packet->l2_5 = NULL;
-    packet->l3   = NULL;
     packet->l4   = NULL;
     packet->l7   = NULL;
 
-    if (b.size < sizeof *eth) {
-        return;
+    if (packet->l2) {
+        ovs_assert(packet->l2 == b.data);
+        packet->l3 = NULL;
+        flow->base_layer = LAYER_2;
+
+        if (b.size < sizeof *eth) {
+            return;
+        }
+
+        /* Link layer. */
+        eth = b.data;
+        memcpy(flow->dl_src, eth->eth_src, ETH_ADDR_LEN);
+        memcpy(flow->dl_dst, eth->eth_dst, ETH_ADDR_LEN);
+
+        /* dl_type, vlan_tci. */
+        ofpbuf_pull(&b, ETH_ADDR_LEN * 2);
+        if (eth->eth_type == htons(ETH_TYPE_VLAN)) {
+            parse_vlan(&b, flow);
+        }
+        flow->dl_type = parse_ethertype(&b);
+
+        /* Parse mpls, copy l3 ttl. */
+        if (eth_type_mpls(flow->dl_type)) {
+            packet->l2_5 = b.data;
+            parse_mpls(&b, flow);
+        }
+
+        /* Network layer. */
+        packet->l3 = b.data;
+    } else {
+        ovs_assert(packet->l3 == b.data);
+        packet->l2 = NULL;
+        flow->base_layer = LAYER_3;
+        /* We assume L3 packets are either IPv4 or IPv6 */
+        flow->dl_type = get_l3_eth_type(packet);
     }
 
-    /* Link layer. */
-    eth = b.data;
-    memcpy(flow->dl_src, eth->eth_src, ETH_ADDR_LEN);
-    memcpy(flow->dl_dst, eth->eth_dst, ETH_ADDR_LEN);
-
-    /* dl_type, vlan_tci. */
-    ofpbuf_pull(&b, ETH_ADDR_LEN * 2);
-    if (eth->eth_type == htons(ETH_TYPE_VLAN)) {
-        parse_vlan(&b, flow);
-    }
-    flow->dl_type = parse_ethertype(&b);
-
-    /* Parse mpls, copy l3 ttl. */
-    if (eth_type_mpls(flow->dl_type)) {
-        packet->l2_5 = b.data;
-        parse_mpls(&b, flow);
-    }
-
-    /* Network layer. */
-    packet->l3 = b.data;
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         const struct ip_header *nh = pull_ip(&b);
         if (nh) {
@@ -535,7 +560,7 @@ flow_unwildcard_tp_ports(const struct flow *flow, struct flow_wildcards *wc)
 void
 flow_get_metadata(const struct flow *flow, struct flow_metadata *fmd)
 {
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 23);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 24);
 
     fmd->tun_id = flow->tunnel.tun_id;
     fmd->tun_src = flow->tunnel.ip_src;
