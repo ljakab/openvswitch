@@ -1696,7 +1696,7 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
 
     /* If 'struct flow' gets additional metadata, we'll need to zero it out
      * before traversing a patch port. */
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 25);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 26);
 
     if (!xport) {
         xlate_report(ctx, "Nonexistent output port");
@@ -1725,6 +1725,14 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
 
     if (!(in_xport->is_layer3) && xport->is_layer3) {
         odp_put_pop_eth_action(&ctx->xout->odp_actions);
+    }
+
+    if (flow->noeth && !(xport->is_layer3)) {
+        flow->noeth = false;
+        flow->dl_src[0] = 0x02;
+        flow->dl_dst[0] = 0x02;
+        odp_put_push_eth_action(&ctx->xout->odp_actions, flow->dl_src,
+                                flow->dl_dst, flow->dl_type);
     }
 
     if (xport->peer) {

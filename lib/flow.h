@@ -37,7 +37,7 @@ struct pkt_metadata;
 /* This sequence number should be incremented whenever anything involving flows
  * or the wildcarding of flows changes.  This will cause build assertion
  * failures in places which likely need to be updated. */
-#define FLOW_WC_SEQ 25
+#define FLOW_WC_SEQ 26
 
 #define FLOW_N_REGS 8
 BUILD_ASSERT_DECL(FLOW_N_REGS <= NXM_NX_MAX_REGS);
@@ -109,6 +109,7 @@ struct flow {
     uint32_t skb_priority;      /* Packet priority for QoS. */
     uint32_t pkt_mark;          /* Packet mark. */
     union flow_in_port in_port; /* Input port.*/
+    uint32_t noeth;             /* Flow has no Ethernet header */
 
     /* L2 */
     uint8_t dl_src[6];          /* Ethernet source address. */
@@ -144,8 +145,8 @@ BUILD_ASSERT_DECL(sizeof(struct flow) % 4 == 0);
 
 /* Remember to update FLOW_WC_SEQ when changing 'struct flow'. */
 BUILD_ASSERT_DECL(offsetof(struct flow, tp_dst) + 2
-                  == sizeof(struct flow_tnl) + 172
-                  && FLOW_WC_SEQ == 25);
+                  == sizeof(struct flow_tnl) + 176
+                  && FLOW_WC_SEQ == 26);
 
 /* Incremental points at which flow classification may be performed in
  * segments.

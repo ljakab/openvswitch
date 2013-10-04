@@ -81,9 +81,12 @@ match_wc_init(struct match *match, const struct flow *flow)
 
     memset(&wc->masks.metadata, 0xff, sizeof wc->masks.metadata);
     memset(&wc->masks.in_port, 0xff, sizeof wc->masks.in_port);
-    memset(&wc->masks.vlan_tci, 0xff, sizeof wc->masks.vlan_tci);
-    memset(&wc->masks.dl_src, 0xff, sizeof wc->masks.dl_src);
-    memset(&wc->masks.dl_dst, 0xff, sizeof wc->masks.dl_dst);
+
+    if (!(flow->noeth)) {
+        memset(&wc->masks.vlan_tci, 0xff, sizeof wc->masks.vlan_tci);
+        memset(&wc->masks.dl_src, 0xff, sizeof wc->masks.dl_src);
+        memset(&wc->masks.dl_dst, 0xff, sizeof wc->masks.dl_dst);
+    }
 
     if (flow->dl_type == htons(ETH_TYPE_IPV6)) {
         memset(&wc->masks.ipv6_src, 0xff, sizeof wc->masks.ipv6_src);
@@ -915,7 +918,7 @@ match_format(const struct match *match, struct ds *s, unsigned int priority)
 
     int i;
 
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 25);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 26);
 
     if (priority != OFP_DEFAULT_PRIORITY) {
         ds_put_format(s, "priority=%u,", priority);

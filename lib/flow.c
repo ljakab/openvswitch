@@ -50,6 +50,21 @@ const uint8_t flow_segment_u32s[4] = {
     FLOW_U32S
 };
 
+static ovs_be16
+get_l3_eth_type(struct ofpbuf *packet)
+{
+    struct ip_header *ip = packet->l3;
+    int ip_ver = IP_VER(ip->ip_ihl_ver);
+    switch (ip_ver) {
+    case 4:
+        return htons(ETH_TYPE_IP);
+    case 6:
+        return htons(ETH_TYPE_IPV6);
+    default:
+        return 0;
+    }
+}
+
 static struct arp_eth_header *
 pull_arp(struct ofpbuf *packet)
 {
@@ -360,6 +375,8 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
 
     COVERAGE_INC(flow_extract);
 
+    ovs_assert(packet->l2 != NULL || packet->l3 != NULL);
+
     memset(flow, 0, sizeof *flow);
 
     if (md) {
@@ -369,10 +386,20 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
         flow->pkt_mark = md->pkt_mark;
     }
 
-    packet->l2   = b.data;
-    packet->l2_5 = NULL;
-    packet->l3   = NULL;
     packet->l4   = NULL;
+
+    if (packet->l3) {
+        packet->l2_5 = NULL;
+        packet->l2   = NULL;
+        flow->noeth = true;
+        /* We assume L3 packets are either IPv4 or IPv6 */
+        flow->dl_type = get_l3_eth_type(packet);
+        goto layer3;
+    }
+
+    packet->l3   = NULL;
+    packet->l2_5 = NULL;
+    packet->l2   = b.data;
 
     if (b.size < sizeof *eth) {
         return;
@@ -398,6 +425,7 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
 
     /* Network layer. */
     packet->l3 = b.data;
+layer3:
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         const struct ip_header *nh = pull_ip(&b);
         if (nh) {
@@ -497,7 +525,7 @@ flow_unwildcard_tp_ports(const struct flow *flow, struct flow_wildcards *wc)
 void
 flow_get_metadata(const struct flow *flow, struct flow_metadata *fmd)
 {
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 25);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 26);
 
     fmd->dp_hash = flow->dp_hash;
     fmd->recirc_id = flow->recirc_id;
@@ -1163,7 +1191,7 @@ flow_push_mpls(struct flow *flow, int n, ovs_be16 mpls_eth_type,
         flow->mpls_lse[0] = set_mpls_lse_values(ttl, tc, 1, htonl(label));
 
         /* Clear all L3 and L4 fields. */
-        BUILD_ASSERT(FLOW_WC_SEQ == 25);
+        BUILD_ASSERT(FLOW_WC_SEQ == 26);
         memset((char *) flow + FLOW_SEGMENT_2_ENDS_AT, 0,
                sizeof(struct flow) - FLOW_SEGMENT_2_ENDS_AT);
     }

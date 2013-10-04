@@ -3389,9 +3389,10 @@ odp_flow_key_to_flow__(const struct nlattr *key, size_t key_len,
         eth_key = nl_attr_get(attrs[OVS_KEY_ATTR_ETHERNET]);
         memcpy(flow->dl_src, eth_key->eth_src, ETH_ADDR_LEN);
         memcpy(flow->dl_dst, eth_key->eth_dst, ETH_ADDR_LEN);
-        if (is_mask) {
-            expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
-        }
+        flow->noeth = false;
+        expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
+    } else {
+        flow->noeth = true;
     }
 
     /* Get Ethertype or 802.1Q TPID or FLOW_DL_TYPE_NONE. */
@@ -3511,6 +3512,22 @@ void
 odp_put_pop_eth_action(struct ofpbuf *odp_actions)
 {
     nl_msg_put_flag(odp_actions, OVS_ACTION_ATTR_POP_ETH);
+}
+
+void
+odp_put_push_eth_action(struct ofpbuf *odp_actions,
+                        const uint8_t eth_src[ETH_ADDR_LEN],
+                        const uint8_t eth_dst[ETH_ADDR_LEN],
+                        const ovs_be16 eth_type)
+{
+    struct ovs_action_push_eth eth;
+
+    memcpy(eth.addresses.eth_src, eth_src, ETH_ADDR_LEN);
+    memcpy(eth.addresses.eth_dst, eth_dst, ETH_ADDR_LEN);
+    eth.eth_type = eth_type;
+
+    nl_msg_put_unspec(odp_actions, OVS_ACTION_ATTR_PUSH_ETH,
+                      &eth, sizeof eth);
 }
 
 void
