@@ -106,7 +106,7 @@ static u16 range_n_bytes(const struct sw_flow_key_range *range)
 static bool match_validate(const struct sw_flow_match *match,
 			   u64 key_attrs, u64 mask_attrs)
 {
-	u64 key_expected = 1ULL << OVS_KEY_ATTR_ETHERNET;
+	u64 key_expected = 0;
 	u64 mask_allowed = key_attrs;  /* At most allow all key attributes */
 
 	/* The following mask attributes allowed only if they
@@ -125,6 +125,7 @@ static bool match_validate(const struct sw_flow_match *match,
 	/* Always allowed mask fields. */
 	mask_allowed |= ((1ULL << OVS_KEY_ATTR_TUNNEL)
 		       | (1ULL << OVS_KEY_ATTR_IN_PORT)
+		       | (1ULL << OVS_KEY_ATTR_ETHERNET)
 		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE));
 
 	/* Check key attributes. */
@@ -506,6 +507,8 @@ static int ovs_key_from_nlattrs(struct sw_flow_match *match,  u64 attrs,
 		SW_FLOW_KEY_MEMCPY(match, eth.dst,
 				eth_key->eth_dst, ETH_ALEN, is_mask);
 		attrs &= ~(1ULL << OVS_KEY_ATTR_ETHERNET);
+	} else {
+		SW_FLOW_KEY_PUT(match, noeth, true, is_mask);
 	}
 
 	if (attrs & (1ULL << OVS_KEY_ATTR_VLAN)) {
@@ -903,7 +906,7 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 		     const struct sw_flow_key *output, struct sk_buff *skb)
 {
 	struct ovs_key_ethernet *eth_key;
-	struct nlattr *nla, *encap;
+	struct nlattr *nla, *encap = NULL;
 	bool is_mask = (swkey != output);
 
 	if (nla_put_u32(skb, OVS_KEY_ATTR_PRIORITY, output->phy.priority))
@@ -928,6 +931,9 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 
 	if (nla_put_u32(skb, OVS_KEY_ATTR_SKB_MARK, output->phy.skb_mark))
 		goto nla_put_failure;
+
+	if (swkey->noeth)
+		goto noethernet;
 
 	nla = nla_reserve(skb, OVS_KEY_ATTR_ETHERNET, sizeof(*eth_key));
 	if (!nla)
@@ -963,6 +969,7 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 		goto unencap;
 	}
 
+noethernet:
 	if (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, output->eth.type))
 		goto nla_put_failure;
 
@@ -1464,6 +1471,8 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 		static const u32 action_lens[OVS_ACTION_ATTR_MAX + 1] = {
 			[OVS_ACTION_ATTR_OUTPUT] = sizeof(u32),
 			[OVS_ACTION_ATTR_USERSPACE] = (u32)-1,
+			[OVS_ACTION_ATTR_PUSH_ETH] = sizeof(struct ovs_action_push_eth),
+			[OVS_ACTION_ATTR_POP_ETH] = 0,
 			[OVS_ACTION_ATTR_PUSH_VLAN] = sizeof(struct ovs_action_push_vlan),
 			[OVS_ACTION_ATTR_POP_VLAN] = 0,
 			[OVS_ACTION_ATTR_SET] = (u32)-1,
@@ -1494,6 +1503,13 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 				return -EINVAL;
 			break;
 
+
+		case OVS_ACTION_ATTR_POP_ETH:
+			break;
+
+		case OVS_ACTION_ATTR_PUSH_ETH:
+			/* TODO May need to validate eth_type? */
+			break;
 
 		case OVS_ACTION_ATTR_POP_VLAN:
 			break;

@@ -209,6 +209,7 @@ static void netdev_port_receive(struct vport *vport, struct sk_buff *skb)
 	skb_push(skb, ETH_HLEN);
 	ovs_skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
 
+	OVS_CB(skb)->is_layer3 = false;
 	ovs_vport_receive(vport, skb, NULL);
 	return;
 
