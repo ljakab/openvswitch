@@ -90,6 +90,7 @@ union flow_in_port {
  * a 32-bit datapath port number.
  */
 struct flow {
+    bool noeth;                 /* Flow has no Ethernet header */
     struct flow_tnl tunnel;     /* Encapsulating tunnel parameters. */
     ovs_be64 metadata;          /* OpenFlow Metadata. */
     struct in6_addr ipv6_src;   /* IPv6 source address. */
@@ -124,7 +125,7 @@ BUILD_ASSERT_DECL(sizeof(struct flow) % 4 == 0);
 
 /* Remember to update FLOW_WC_SEQ when changing 'struct flow'. */
 BUILD_ASSERT_DECL(offsetof(struct flow, nw_frag) + 1
-                  == sizeof(struct flow_tnl) + 154
+                  == sizeof(struct flow_tnl) + 162
                   && FLOW_WC_SEQ == 22);
 
 /* Represents the metadata fields of struct flow. */

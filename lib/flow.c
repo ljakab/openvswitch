@@ -41,6 +41,21 @@
 COVERAGE_DEFINE(flow_extract);
 COVERAGE_DEFINE(miniflow_malloc);
 
+static ovs_be16
+get_l3_eth_type(struct ofpbuf *packet)
+{
+    struct ip_header *ip = packet->l3;
+    int ip_ver = IP_VER(ip->ip_ihl_ver);
+    switch (ip_ver) {
+    case 4:
+        return htons(ETH_TYPE_IP);
+    case 6:
+        return htons(ETH_TYPE_IPV6);
+    default:
+        return 0;
+    }
+}
+
 static struct arp_eth_header *
 pull_arp(struct ofpbuf *packet)
 {
@@ -383,6 +398,8 @@ flow_extract(struct ofpbuf *packet, uint32_t skb_priority, uint32_t pkt_mark,
 
     COVERAGE_INC(flow_extract);
 
+    ovs_assert(packet->l2 != NULL || packet->l3 != NULL);
+
     memset(flow, 0, sizeof *flow);
 
     if (tnl) {
@@ -395,11 +412,21 @@ flow_extract(struct ofpbuf *packet, uint32_t skb_priority, uint32_t pkt_mark,
     flow->skb_priority = skb_priority;
     flow->pkt_mark = pkt_mark;
 
-    packet->l2   = b.data;
-    packet->l2_5 = NULL;
-    packet->l3   = NULL;
-    packet->l4   = NULL;
     packet->l7   = NULL;
+    packet->l4   = NULL;
+
+    if (packet->l3) {
+        packet->l2_5 = NULL;
+        packet->l2   = NULL;
+        flow->noeth = true;
+        /* We assume L3 packets are either IPv4 or IPv6 */
+        flow->dl_type = get_l3_eth_type(packet);
+        goto layer3;
+    }
+
+    packet->l3   = NULL;
+    packet->l2_5 = NULL;
+    packet->l2   = b.data;
 
     if (b.size < sizeof *eth) {
         return;
@@ -425,6 +452,7 @@ flow_extract(struct ofpbuf *packet, uint32_t skb_priority, uint32_t pkt_mark,
 
     /* Network layer. */
     packet->l3 = b.data;
+layer3:
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         const struct ip_header *nh = pull_ip(&b);
         if (nh) {

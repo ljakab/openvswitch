@@ -1030,7 +1030,7 @@ static int
 dpif_netdev_execute(struct dpif *dpif, const struct dpif_execute *execute)
 {
     struct dp_netdev *dp = get_dp_netdev(dpif);
-    struct ofpbuf copy;
+    struct ofpbuf *copy;
     struct flow key;
     int error;
 
@@ -1040,21 +1040,19 @@ dpif_netdev_execute(struct dpif *dpif, const struct dpif_execute *execute)
     }
 
     /* Make a deep copy of 'packet', because we might modify its data. */
-    ofpbuf_init(&copy, DP_NETDEV_HEADROOM + execute->packet->size);
-    ofpbuf_reserve(&copy, DP_NETDEV_HEADROOM);
-    ofpbuf_put(&copy, execute->packet->data, execute->packet->size);
+    copy = ofpbuf_clone_with_headroom(execute->packet, DP_NETDEV_HEADROOM);
 
-    flow_extract(&copy, 0, 0, NULL, NULL, &key);
+    flow_extract(copy, 0, 0, NULL, NULL, &key);
     error = dpif_netdev_flow_from_nlattrs(execute->key, execute->key_len,
                                           &key);
     if (!error) {
         ovs_mutex_lock(&dp_netdev_mutex);
-        dp_netdev_execute_actions(dp, &copy, &key,
+        dp_netdev_execute_actions(dp, copy, &key,
                                   execute->actions, execute->actions_len);
         ovs_mutex_unlock(&dp_netdev_mutex);
     }
 
-    ofpbuf_uninit(&copy);
+    ofpbuf_uninit(copy);
     return error;
 }
 
