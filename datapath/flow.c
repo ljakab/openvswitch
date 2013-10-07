@@ -460,7 +460,6 @@ int ovs_flow_extract(struct sk_buff *skb, u16 in_port, struct sw_flow_key *key)
 	if (OVS_CB(skb)->is_layer3) {
 		/* The receiving L3 vport should set the inner packet protocol
 		 * on the skb.  We use that here to set eth.type */
-		printk("ovs_flow_extract: is_layer3!\n");
 		key->noeth = true;
 		key->eth.type = skb->protocol;
 	} else {
