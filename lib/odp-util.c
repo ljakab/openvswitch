@@ -3590,6 +3590,13 @@ commit_set_ether_addr_action(const struct flow *flow, struct flow *base,
         return;
     }
 
+    /* If we have a L3 --> L2 flow, the push_eth action takes care of setting
+     * the appropriate MAC source and destination addresses, no need to add a
+     * set action
+     */
+    if (base->noeth && !flow->noeth)
+        return;
+
     memset(&wc->masks.dl_src, 0xff, sizeof wc->masks.dl_src);
     memset(&wc->masks.dl_dst, 0xff, sizeof wc->masks.dl_dst);
 
