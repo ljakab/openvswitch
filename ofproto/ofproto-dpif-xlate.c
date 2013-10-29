@@ -1729,8 +1729,6 @@ compose_output_action__(struct xlate_ctx *ctx, ofp_port_t ofp_port,
 
     if (flow->noeth && !(xport->is_layer3)) {
         flow->noeth = false;
-        flow->dl_src[0] = 0x02;
-        flow->dl_dst[0] = 0x02;
         odp_put_push_eth_action(&ctx->xout->odp_actions, flow->dl_src,
                                 flow->dl_dst, flow->dl_type);
     }
