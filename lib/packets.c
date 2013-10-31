@@ -218,19 +218,29 @@ eth_pop_vlan(struct ofpbuf *packet)
     }
 }
 
-/* Push Ethernet header */
+/* Push Ethernet header onto 'packet' assuming it is layer 3 */
 void
 push_eth(struct ofpbuf *packet, const uint8_t dst[ETH_ADDR_LEN],
          const uint8_t src[ETH_ADDR_LEN], ovs_be16 type)
 {
-    /* TODO */
+    struct eth_header *eh = ofpbuf_push_uninit(packet, ETH_HEADER_LEN);
+
+    memcpy(eh->eth_dst, dst, ETH_ADDR_LEN);
+    memcpy(eh->eth_src, src, ETH_ADDR_LEN);
+    eh->eth_type = type;
+    packet->l2 = packet->data;
 }
 
-/* Pop Ethernet header */
+/* Removes Ethernet header, including all VLAN and MPLS headers, from
+ * 'packet'.
+ *
+ * Previous to calling this funciton, 'packet->l3' must be set. */
 void
 pop_eth(struct ofpbuf *packet)
 {
-    /* TODO */
+    packet->size -= (char*)packet->l3 - (char*)packet->l2;
+    packet->data = packet->l3;
+    packet->l2 = NULL;
 }
 
 /* Set ethertype of the packet. */
