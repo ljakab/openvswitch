@@ -1480,8 +1480,6 @@ port_construct(struct ofport *port_)
         return 0;
     }
 
-    port->is_layer3 = netdev_vport_is_layer3(netdev);
-
     error = dpif_port_query_by_name(ofproto->backer->dpif,
                                     netdev_vport_get_dpif_port(netdev, namebuf,
                                                                sizeof namebuf),
