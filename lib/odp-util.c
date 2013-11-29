@@ -3389,10 +3389,10 @@ odp_flow_key_to_flow__(const struct nlattr *key, size_t key_len,
         eth_key = nl_attr_get(attrs[OVS_KEY_ATTR_ETHERNET]);
         memcpy(flow->dl_src, eth_key->eth_src, ETH_ADDR_LEN);
         memcpy(flow->dl_dst, eth_key->eth_dst, ETH_ADDR_LEN);
-        flow->noeth = false;
+        flow->base_layer = LAYER_2;
         expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
     } else {
-        flow->noeth = true;
+        flow->base_layer = LAYER_3;
     }
 
     /* Get Ethertype or 802.1Q TPID or FLOW_DL_TYPE_NONE. */
@@ -3594,8 +3594,9 @@ commit_set_ether_addr_action(const struct flow *flow, struct flow *base,
      * the appropriate MAC source and destination addresses, no need to add a
      * set action
      */
-    if (base->noeth && !flow->noeth)
+    if (base->base_layer == LAYER_3 && flow->base_layer == LAYER_2) {
         return;
+    }
 
     memset(&wc->masks.dl_src, 0xff, sizeof wc->masks.dl_src);
     memset(&wc->masks.dl_dst, 0xff, sizeof wc->masks.dl_dst);

@@ -80,6 +80,11 @@ union flow_in_port {
 /* Maximum number of supported MPLS labels. */
 #define FLOW_MAX_MPLS_LABELS 3
 
+enum base_layer {
+    LAYER_2 = 2,
+    LAYER_3 = 3
+};
+
 /*
  * A flow in the network.
  *
@@ -109,7 +114,7 @@ struct flow {
     uint32_t skb_priority;      /* Packet priority for QoS. */
     uint32_t pkt_mark;          /* Packet mark. */
     union flow_in_port in_port; /* Input port.*/
-    uint32_t noeth;             /* Flow has no Ethernet header */
+    enum base_layer base_layer; /* Fields start at this layer */
 
     /* L2 */
     uint8_t dl_src[6];          /* Ethernet source address. */

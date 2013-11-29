@@ -386,46 +386,47 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
         flow->pkt_mark = md->pkt_mark;
     }
 
+    packet->l2_5 = NULL;
     packet->l4   = NULL;
+    packet->l7   = NULL;
 
-    if (packet->l3) {
-        packet->l2_5 = NULL;
-        packet->l2   = NULL;
-        flow->noeth = true;
+    if (packet->l2) {
+        ovs_assert(packet->l2 == b.data);
+        packet->l3 = NULL;
+        flow->base_layer = LAYER_2;
+
+        if (b.size < sizeof *eth) {
+            return;
+        }
+
+        /* Link layer. */
+        eth = b.data;
+        memcpy(flow->dl_src, eth->eth_src, ETH_ADDR_LEN);
+        memcpy(flow->dl_dst, eth->eth_dst, ETH_ADDR_LEN);
+
+        /* dl_type, vlan_tci. */
+        ofpbuf_pull(&b, ETH_ADDR_LEN * 2);
+        if (eth->eth_type == htons(ETH_TYPE_VLAN)) {
+            parse_vlan(&b, flow);
+        }
+        flow->dl_type = parse_ethertype(&b);
+
+        /* Parse mpls, copy l3 ttl. */
+        if (eth_type_mpls(flow->dl_type)) {
+            packet->l2_5 = b.data;
+            parse_mpls(&b, flow);
+        }
+
+        /* Network layer. */
+        packet->l3 = b.data;
+    } else {
+        ovs_assert(packet->l3 == b.data);
+        packet->l2 = NULL;
+        flow->base_layer = LAYER_3;
         /* We assume L3 packets are either IPv4 or IPv6 */
         flow->dl_type = get_l3_eth_type(packet);
-        goto layer3;
     }
 
-    packet->l3   = NULL;
-    packet->l2_5 = NULL;
-    packet->l2   = b.data;
-
-    if (b.size < sizeof *eth) {
-        return;
-    }
-
-    /* Link layer. */
-    eth = b.data;
-    memcpy(flow->dl_src, eth->eth_src, ETH_ADDR_LEN);
-    memcpy(flow->dl_dst, eth->eth_dst, ETH_ADDR_LEN);
-
-    /* dl_type, vlan_tci. */
-    ofpbuf_pull(&b, ETH_ADDR_LEN * 2);
-    if (eth->eth_type == htons(ETH_TYPE_VLAN)) {
-        parse_vlan(&b, flow);
-    }
-    flow->dl_type = parse_ethertype(&b);
-
-    /* Parse mpls, copy l3 ttl. */
-    if (eth_type_mpls(flow->dl_type)) {
-        packet->l2_5 = b.data;
-        parse_mpls(&b, flow);
-    }
-
-    /* Network layer. */
-    packet->l3 = b.data;
-layer3:
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         const struct ip_header *nh = pull_ip(&b);
         if (nh) {

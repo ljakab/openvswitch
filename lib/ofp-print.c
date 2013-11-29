@@ -66,10 +66,11 @@ ofp_packet_to_string(const void *data, size_t len, bool is_layer3)
 
     ofpbuf_use_const(&buf, data, len);
 
-    if (is_layer3)
+    if (is_layer3) {
         buf.l3 = buf.data;
-    else
+    } else {
         buf.l2 = buf.data;
+    }
 
     flow_extract(&buf, &md, &flow);
     flow_format(&ds, &flow);
