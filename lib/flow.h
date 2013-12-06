@@ -100,6 +100,10 @@ enum base_layer {
  * The fields are organized in four segments to facilitate staged lookup, where
  * lower layer fields are first used to determine if the later fields need to
  * be looked at.  This enables better wildcarding for datapath flows.
+ *
+ * The starting layer is specified by 'base_layer'.  When 'base_layer' is
+ * LAYER_3, dl_src, dl_tci, and vlan_tci are not used for matching. The
+ * dl_type field is still used to specify the layer 3 protocol.
  */
 struct flow {
     /* Recirculation */

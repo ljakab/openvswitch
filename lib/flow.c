@@ -351,17 +351,15 @@ invalid:
     return;
 }
 
-/* Initializes 'flow' members from 'packet' and 'md'
+/* Initializes 'flow' members from 'packet' and 'md'.  Expects at least one of
+ * packet->l2 or packet->l3 to be set for indicating packet type.  For layer 3
+ * packets, packet->l2 must be NULL and packet->l3 set to the beginning of the
+ * layer 3 header.
  *
  * Initializes 'packet' header pointers as follows:
  *
- *    - packet->l2 to the start of the Ethernet header.
- *
- *    - packet->l2_5 to the start of the MPLS shim header.
- *
- *    - packet->l3 to just past the Ethernet header, or just past the
- *      vlan_header if one is present, to the first byte of the payload of the
- *      Ethernet frame.
+ *    - packet->l2_5 to the start of the MPLS shim header, if one is present
+ *      and packet->l2 is non-NULL
  *
  *    - packet->l4 to just past the IPv4 header, if one is present and has a
  *      correct length, and otherwise NULL.
