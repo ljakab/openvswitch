@@ -81,8 +81,8 @@ union flow_in_port {
 #define FLOW_MAX_MPLS_LABELS 3
 
 enum base_layer {
-    LAYER_2 = 2,
-    LAYER_3 = 3
+    LAYER_2 = 0,
+    LAYER_3 = 1
 };
 
 /*
