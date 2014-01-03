@@ -944,6 +944,7 @@ check_variable_length_userdata(struct dpif_backer *backer)
     ofpbuf_init(&packet, ETH_HEADER_LEN);
     eth = ofpbuf_put_zeros(&packet, ETH_HEADER_LEN);
     eth->eth_type = htons(0x1234);
+    packet.l2 = packet.data;
 
     /* Execute the actions.  On older datapaths this fails with ERANGE, on
      * newer datapaths it succeeds. */
