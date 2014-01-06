@@ -605,11 +605,11 @@ enum ovs_action_attr {
 	OVS_ACTION_ATTR_PUSH_VLAN,    /* struct ovs_action_push_vlan. */
 	OVS_ACTION_ATTR_POP_VLAN,     /* No argument. */
 	OVS_ACTION_ATTR_SAMPLE,       /* Nested OVS_SAMPLE_ATTR_*. */
-	OVS_ACTION_ATTR_PUSH_MPLS,    /* struct ovs_action_push_mpls. */
-	OVS_ACTION_ATTR_POP_MPLS,     /* __be16 ethertype. */
 	OVS_ACTION_ATTR_RECIRC,	      /* struct ovs_action_recirc. */
 	OVS_ACTION_ATTR_PUSH_ETH,     /* struct ovs_action_push_eth. */
 	OVS_ACTION_ATTR_POP_ETH,      /* No argument. */
+	OVS_ACTION_ATTR_PUSH_MPLS = 61, /* struct ovs_action_push_mpls. */
+	OVS_ACTION_ATTR_POP_MPLS = 62,  /* __be16 ethertype. */
 	__OVS_ACTION_ATTR_MAX
 };
 

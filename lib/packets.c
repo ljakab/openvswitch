@@ -234,13 +234,14 @@ push_eth(struct ofpbuf *packet, const uint8_t dst[ETH_ADDR_LEN],
 /* Removes Ethernet header, including all VLAN and MPLS headers, from
  * 'packet'.
  *
- * Previous to calling this funciton, 'packet->l3' must be set. */
+ * Previous to calling this function, 'packet->l3' must be set. */
 void
 pop_eth(struct ofpbuf *packet)
 {
     packet->size -= (char*)packet->l3 - (char*)packet->l2;
     packet->data = packet->l3;
     packet->l2 = NULL;
+    packet->l2_5 = NULL;
 }
 
 /* Set ethertype of the packet. */

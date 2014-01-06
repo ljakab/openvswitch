@@ -647,11 +647,11 @@ parse_odp_action(const char *s, const struct simap *port_names,
         int eth_type = 0;
         int n = -1;
 
-        if (sscanf(s, "push_eth(src="ETH_ADDR_SCAN_FMT","
-                   "dst="ETH_ADDR_SCAN_FMT",type=%i)%n",
-                   ETH_ADDR_SCAN_ARGS(push.addresses.eth_src),
-                   ETH_ADDR_SCAN_ARGS(push.addresses.eth_dst),
-                   &eth_type, &n) > 0 && n > 0) {
+        if (ovs_scan(s, "push_eth(src="ETH_ADDR_SCAN_FMT","
+                     "dst="ETH_ADDR_SCAN_FMT",type=%i)%n",
+                     ETH_ADDR_SCAN_ARGS(push.addresses.eth_src),
+                     ETH_ADDR_SCAN_ARGS(push.addresses.eth_dst),
+                     &eth_type, &n)) {
 
             push.eth_type = htons(eth_type);
 
