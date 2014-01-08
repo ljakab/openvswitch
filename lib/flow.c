@@ -361,6 +361,10 @@ invalid:
  *    - packet->l2_5 to the start of the MPLS shim header, if one is present
  *      and packet->l2 is non-NULL
  *
+ *    - packet->l3 to just past the Ethernet header, or just past the
+ *      vlan_header if one is present and packet->l2 is non-NULL, to the first
+ *      byte of the payload of the Ethernet frame.
+ *
  *    - packet->l4 to just past the IPv4 header, if one is present and has a
  *      correct length, and otherwise NULL.
  */
@@ -419,8 +423,12 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
         packet->l3 = b.data;
     } else {
         ovs_assert(packet->l3 == b.data);
-        packet->l2 = NULL;
         flow->base_layer = LAYER_3;
+
+        if (b.size < IP_HEADER_LEN) {
+            return;
+        }
+
         /* We assume L3 packets are either IPv4 or IPv6 */
         flow->dl_type = get_l3_eth_type(packet);
     }

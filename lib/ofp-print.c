@@ -53,8 +53,9 @@ static void ofp_print_queue_name(struct ds *string, uint32_t port);
 static void ofp_print_error(struct ds *, enum ofperr);
 
 
-/* Returns a string that represents the contents of the Ethernet frame in the
- * 'len' bytes starting at 'data'.  The caller must free the returned string.*/
+/* Returns a string that represents the contents of the Ethernet frame
+ * (is_layer3 == False) or IP packet (is_layer3 == True) in the 'len' bytes
+ * starting at 'data'.   The caller must free the returned string.*/
 char *
 ofp_packet_to_string(const void *data, size_t len, bool is_layer3)
 {

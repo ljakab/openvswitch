@@ -1538,9 +1538,7 @@ parse_odp_packet(struct ofpbuf *buf, struct dpif_upcall *upcall,
     /* Set the correct layer based on the presence of OVS_KEY_ATTR_ETHERNET */
     if (nl_attr_find__(upcall->key, upcall->key_len, OVS_KEY_ATTR_ETHERNET)) {
         upcall->packet.l2 = upcall->packet.data;
-        upcall->packet.l3 = NULL;
     } else {
-        upcall->packet.l2 = NULL;
         upcall->packet.l3 = upcall->packet.data;
     }
 

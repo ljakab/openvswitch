@@ -118,7 +118,7 @@ struct flow {
     uint32_t skb_priority;      /* Packet priority for QoS. */
     uint32_t pkt_mark;          /* Packet mark. */
     union flow_in_port in_port; /* Input port.*/
-    enum base_layer base_layer; /* Fields start at this layer */
+    uint32_t base_layer;        /* Fields start at this layer */
 
     /* L2 */
     uint8_t dl_src[6];          /* Ethernet source address. */
