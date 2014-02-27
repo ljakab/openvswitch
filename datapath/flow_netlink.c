@@ -511,7 +511,7 @@ static int ovs_key_from_nlattrs(struct sw_flow_match *match, u64 attrs,
 				eth_key->eth_dst, ETH_ALEN, is_mask);
 		attrs &= ~(1ULL << OVS_KEY_ATTR_ETHERNET);
 	} else {
-		SW_FLOW_KEY_PUT(match, noeth, true, is_mask);
+		SW_FLOW_KEY_PUT(match, phy.noeth, true, is_mask);
 	}
 
 	if (attrs & (1ULL << OVS_KEY_ATTR_VLAN)) {
@@ -908,7 +908,7 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 	if (nla_put_u32(skb, OVS_KEY_ATTR_SKB_MARK, output->phy.skb_mark))
 		goto nla_put_failure;
 
-	if (swkey->noeth)
+	if (swkey->phy.noeth)
 		goto noethernet;
 
 	nla = nla_reserve(skb, OVS_KEY_ATTR_ETHERNET, sizeof(*eth_key));

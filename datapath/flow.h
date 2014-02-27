@@ -69,11 +69,11 @@ static inline void ovs_flow_tun_key_init(struct ovs_key_ipv4_tunnel *tun_key,
 
 struct sw_flow_key {
 	struct ovs_key_ipv4_tunnel tun_key;  /* Encapsulating tunnel key. */
-	bool noeth;			/* Packet has no Ethernet header */
 	struct {
 		u32	priority;	/* Packet QoS priority. */
 		u32	skb_mark;	/* SKB mark. */
 		u16	in_port;	/* Input switch port (or DP_MAX_PORTS). */
+		bool	noeth;		/* Packet has no Ethernet header */
 	} __packed phy; /* Safe when right after 'tun_key'. */
 	struct {
 		u8     src[ETH_ALEN];	/* Ethernet source address. */
