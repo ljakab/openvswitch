@@ -250,8 +250,7 @@ static int lisp_rcv(struct sock *sk, struct sk_buff *skb)
 		goto error;
 	}
 
-	OVS_CB(skb)->is_layer3 = true;
-	ovs_vport_receive(vport_from_priv(lisp_port), skb, &tun_key);
+	ovs_vport_receive(vport_from_priv(lisp_port), skb, &tun_key, true);
 	goto out;
 
 error:
