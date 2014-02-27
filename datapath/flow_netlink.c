@@ -1463,7 +1463,6 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_ETH:
-			/* TODO May need to validate eth_type? */
 			break;
 
 		case OVS_ACTION_ATTR_POP_VLAN:
