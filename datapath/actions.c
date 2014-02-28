@@ -149,22 +149,18 @@ static int pop_eth(struct sk_buff *skb)
 	return 0;
 }
 
-static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
+static void push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
 {
-	int err;
-
 	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 
-	err = set_eth_addr(skb, &ethh->addresses);
-	if (unlikely(err))
-		return err;
+	memcpy(eth_hdr(skb)->h_source, &ethh->addresses.eth_src, ETH_ALEN);
+	memcpy(eth_hdr(skb)->h_dest, &ethh->addresses.eth_dst, ETH_ALEN);
 
 	eth_hdr(skb)->h_proto = ethh->eth_type;
+	skb->protocol = ethh->eth_type;
 
 	ovs_skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
-
-	return 0;
 }
 
 static void set_ip_addr(struct sk_buff *skb, struct iphdr *nh,
@@ -571,7 +567,7 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_ETH:
-			err = push_eth(skb, nla_data(a));
+			push_eth(skb, nla_data(a));
 			break;
 
 		case OVS_ACTION_ATTR_POP_ETH:
