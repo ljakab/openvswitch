@@ -509,10 +509,10 @@ static int ovs_key_from_nlattrs(struct sw_flow_match *match, u64 attrs,
 				eth_key->eth_src, ETH_ALEN, is_mask);
 		SW_FLOW_KEY_MEMCPY(match, eth.dst,
 				eth_key->eth_dst, ETH_ALEN, is_mask);
+		SW_FLOW_KEY_PUT(match, phy.noeth, false, is_mask);
 		attrs &= ~(1ULL << OVS_KEY_ATTR_ETHERNET);
-	} else {
+	} else if (!is_mask)
 		SW_FLOW_KEY_PUT(match, phy.noeth, true, is_mask);
-	}
 
 	if (attrs & (1ULL << OVS_KEY_ATTR_VLAN)) {
 		__be16 tci;
