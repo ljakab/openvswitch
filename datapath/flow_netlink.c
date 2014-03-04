@@ -928,8 +928,7 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 		encap = nla_nest_start(skb, OVS_KEY_ATTR_ENCAP);
 		if (!swkey->eth.tci)
 			goto unencap;
-	} else
-		encap = NULL;
+	}
 
 	if (swkey->eth.type == htons(ETH_P_802_2)) {
 		/*
