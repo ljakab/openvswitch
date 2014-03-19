@@ -145,6 +145,9 @@ static int set_eth_addr(struct sk_buff *skb,
 
 static int pop_eth(struct sk_buff *skb)
 {
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_sub(skb->csum, csum_partial(skb->data,
+				skb_network_offset(skb), 0));
 	skb_pull(skb, skb_network_offset(skb));
 	return 0;
 }

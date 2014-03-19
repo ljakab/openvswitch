@@ -1241,6 +1241,14 @@ static int validate_tp_port(const struct sw_flow_key *flow_key)
 	return -EINVAL;
 }
 
+static int validate_eth_present(const struct sw_flow_key *flow_key)
+{
+	if (flow_key->phy.noeth)
+		return -EINVAL;
+
+	return 0;
+}
+
 void ovs_match_init(struct sw_flow_match *match,
 		    struct sw_flow_key *key,
 		    struct sw_flow_mask *mask)
@@ -1304,7 +1312,12 @@ static int validate_set(const struct nlattr *a,
 
 	case OVS_KEY_ATTR_PRIORITY:
 	case OVS_KEY_ATTR_SKB_MARK:
+		break;
+
 	case OVS_KEY_ATTR_ETHERNET:
+		err = validate_eth_present(flow_key);
+		if (err)
+			return err;
 		break;
 
 	case OVS_KEY_ATTR_TUNNEL:
@@ -1459,6 +1472,9 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 
 
 		case OVS_ACTION_ATTR_POP_ETH:
+			err = validate_eth_present(key);
+			if (err)
+				return err;
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_ETH:
@@ -1468,6 +1484,9 @@ int ovs_nla_copy_actions(const struct nlattr *attr,
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_VLAN:
+			err = validate_eth_present(key);
+			if (err)
+				return err;
 			vlan = nla_data(a);
 			if (vlan->vlan_tpid != htons(ETH_P_8021Q))
 				return -EINVAL;
