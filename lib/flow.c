@@ -390,7 +390,6 @@ flow_extract(struct ofpbuf *packet, const struct pkt_metadata *md,
 
     packet->l2_5 = NULL;
     packet->l4   = NULL;
-    packet->l7   = NULL;
 
     if (packet->l2) {
         ovs_assert(packet->l2 == b.data);

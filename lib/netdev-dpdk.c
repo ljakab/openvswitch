@@ -563,6 +563,7 @@ build_ofpbuf(struct rte_mbuf *pkt)
     b->allocated = pkt->buf_len;
     b->source = OFPBUF_DPDK;
     b->size = rte_pktmbuf_data_len(pkt);
+    b->l2 = b->data;
 
     dp_packet_pad(b);
 

@@ -1011,6 +1011,7 @@ netdev_linux_rxq_recv(struct netdev_rxq *rxq_, struct ofpbuf **packet, int *c)
         }
         ofpbuf_delete(buffer);
     } else {
+	buffer->l2 = buffer->data;
         dp_packet_pad(buffer);
         packet[0] = buffer;
         *c = 1;
