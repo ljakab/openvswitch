@@ -3396,12 +3396,10 @@ odp_flow_key_to_flow__(const struct nlattr *key, size_t key_len,
         eth_key = nl_attr_get(attrs[OVS_KEY_ATTR_ETHERNET]);
         memcpy(flow->dl_src, eth_key->eth_src, ETH_ADDR_LEN);
         memcpy(flow->dl_dst, eth_key->eth_dst, ETH_ADDR_LEN);
-        if (is_mask) {
-            expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
-        }
-    }
-    if (!is_mask) {
+        flow->base_layer = LAYER_2;
         expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERNET;
+    } else {
+        flow->base_layer = LAYER_3;
     }
 
     /* Get Ethertype or 802.1Q TPID or FLOW_DL_TYPE_NONE. */
@@ -3596,6 +3594,14 @@ commit_set_ether_addr_action(const struct flow *flow, struct flow *base,
 
     if (eth_addr_equals(base->dl_src, flow->dl_src) &&
         eth_addr_equals(base->dl_dst, flow->dl_dst)) {
+        return;
+    }
+
+    /* If we have a L3 --> L2 flow, the push_eth action takes care of setting
+     * the appropriate MAC source and destination addresses, no need to add a
+     * set action
+     */
+    if (base->base_layer == LAYER_3 && flow->base_layer == LAYER_2) {
         return;
     }
 
