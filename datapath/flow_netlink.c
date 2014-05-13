@@ -968,10 +968,10 @@ int ovs_nla_put_flow(const struct sw_flow_key *swkey,
 		goto unencap;
 	}
 
-noethernet:
 	if (nla_put_be16(skb, OVS_KEY_ATTR_ETHERTYPE, output->eth.type))
 		goto nla_put_failure;
 
+noethernet:
 	if (swkey->eth.type == htons(ETH_P_IP)) {
 		struct ovs_key_ipv4 *ipv4_key;
 

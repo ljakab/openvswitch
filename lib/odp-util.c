@@ -2982,7 +2982,13 @@ parse_ethertype(const struct nlattr *attrs[OVS_KEY_ATTR_MAX + 1],
         *expected_attrs |= UINT64_C(1) << OVS_KEY_ATTR_ETHERTYPE;
     } else {
         if (!is_mask) {
-            flow->dl_type = htons(FLOW_DL_TYPE_NONE);
+            if (present_attrs & (UINT64_C(1) << OVS_KEY_ATTR_IPV4)) {
+                flow->dl_type = htons(ETH_TYPE_IP);
+            } else if (present_attrs & (UINT64_C(1) << OVS_KEY_ATTR_IPV6)) {
+                flow->dl_type = htons(ETH_TYPE_IPV6);
+            } else {
+                flow->dl_type = htons(FLOW_DL_TYPE_NONE);
+            }
         } else if (ntohs(src_flow->dl_type) < ETH_TYPE_MIN) {
             /* See comments in odp_flow_key_from_flow__(). */
             VLOG_ERR_RL(&rl, "mask expected for non-Ethernet II frame");
