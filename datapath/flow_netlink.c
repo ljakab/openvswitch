@@ -114,9 +114,7 @@ static bool match_validate(const struct sw_flow_match *match,
 
 	/* The following mask attributes allowed only if they
 	 * pass the validation tests. */
-	mask_allowed &= ~((1ULL << OVS_KEY_ATTR_IPV4)
-			| (1ULL << OVS_KEY_ATTR_IPV6)
-			| (1ULL << OVS_KEY_ATTR_TCP)
+	mask_allowed &= ~((1ULL << OVS_KEY_ATTR_TCP)
 			| (1ULL << OVS_KEY_ATTR_TCP_FLAGS)
 			| (1ULL << OVS_KEY_ATTR_UDP)
 			| (1ULL << OVS_KEY_ATTR_SCTP)
@@ -129,7 +127,9 @@ static bool match_validate(const struct sw_flow_match *match,
 	mask_allowed |= ((1ULL << OVS_KEY_ATTR_TUNNEL)
 		       | (1ULL << OVS_KEY_ATTR_IN_PORT)
 		       | (1ULL << OVS_KEY_ATTR_ETHERNET)
-		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE));
+		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE)
+		       | (1ULL << OVS_KEY_ATTR_IPV4)
+		       | (1ULL << OVS_KEY_ATTR_IPV6));
 
 	/* Check key attributes. */
 	if (match->key->eth.type == htons(ETH_P_ARP)
@@ -570,6 +570,18 @@ static int ovs_key_from_nlattrs(struct sw_flow_match *match, u64 attrs,
 	if (attrs & (1ULL << OVS_KEY_ATTR_IPV4)) {
 		const struct ovs_key_ipv4 *ipv4_key;
 
+		/* Add eth.type value for layer 3 flows */
+		if (!(attrs & (1ULL << OVS_KEY_ATTR_ETHERTYPE))) {
+			__be16 eth_type;
+
+			if (is_mask) {
+				eth_type = htons(0xffff);
+			} else {
+				eth_type = htons(ETH_P_IP);
+			}
+			SW_FLOW_KEY_PUT(match, eth.type, eth_type, is_mask);
+		}
+
 		ipv4_key = nla_data(a[OVS_KEY_ATTR_IPV4]);
 		if (!is_mask && ipv4_key->ipv4_frag > OVS_FRAG_TYPE_MAX) {
 			OVS_NLERR("Unknown IPv4 fragment type (value=%d, max=%d).\n",
@@ -593,6 +605,18 @@ static int ovs_key_from_nlattrs(struct sw_flow_match *match, u64 attrs,
 
 	if (attrs & (1ULL << OVS_KEY_ATTR_IPV6)) {
 		const struct ovs_key_ipv6 *ipv6_key;
+
+		/* Add eth.type value for layer 3 flows */
+		if (!(attrs & (1ULL << OVS_KEY_ATTR_ETHERTYPE))) {
+			__be16 eth_type;
+
+			if (is_mask) {
+				eth_type = htons(0xffff);
+			} else {
+				eth_type = htons(ETH_P_IPV6);
+			}
+			SW_FLOW_KEY_PUT(match, eth.type, eth_type, is_mask);
+		}
 
 		ipv6_key = nla_data(a[OVS_KEY_ATTR_IPV6]);
 		if (!is_mask && ipv6_key->ipv6_frag > OVS_FRAG_TYPE_MAX) {

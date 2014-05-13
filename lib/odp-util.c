@@ -2525,7 +2525,7 @@ odp_flow_key_from_flow__(struct ofpbuf *buf, const struct flow *flow,
                          size_t max_mpls_depth, bool export_mask)
 {
     struct ovs_key_ethernet *eth_key;
-    size_t encap;
+    size_t encap = 0;
     const struct flow *data = export_mask ? mask : flow;
 
     nl_msg_put_u32(buf, OVS_KEY_ATTR_PRIORITY, data->skb_priority);
@@ -2550,6 +2550,10 @@ odp_flow_key_from_flow__(struct ofpbuf *buf, const struct flow *flow,
         nl_msg_put_odp_port(buf, OVS_KEY_ATTR_IN_PORT, odp_in_port);
     }
 
+    if (flow->base_layer == LAYER_3) {
+        goto noethernet;
+    }
+
     eth_key = nl_msg_put_unspec_uninit(buf, OVS_KEY_ATTR_ETHERNET,
                                        sizeof *eth_key);
     memcpy(eth_key->eth_src, data->dl_src, ETH_ADDR_LEN);
@@ -2566,8 +2570,6 @@ odp_flow_key_from_flow__(struct ofpbuf *buf, const struct flow *flow,
         if (flow->vlan_tci == htons(0)) {
             goto unencap;
         }
-    } else {
-        encap = 0;
     }
 
     if (ntohs(flow->dl_type) < ETH_TYPE_MIN) {
@@ -2590,6 +2592,7 @@ odp_flow_key_from_flow__(struct ofpbuf *buf, const struct flow *flow,
 
     nl_msg_put_be16(buf, OVS_KEY_ATTR_ETHERTYPE, data->dl_type);
 
+noethernet:
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         struct ovs_key_ipv4 *ipv4_key;
 
