@@ -113,7 +113,7 @@ static int gre_rcv(struct sk_buff *skb,
 	ovs_flow_tun_info_init(&tun_info, ip_hdr(skb), key,
 			       filter_tnl_flags(tpi->flags), NULL, 0);
 
-	ovs_vport_receive(vport, skb, &tun_info);
+	ovs_vport_receive(vport, skb, &tun_info, false);
 	return PACKET_RCVD;
 }
 
@@ -283,6 +283,9 @@ static void gre_tnl_destroy(struct vport *vport)
 static int gre_send(struct vport *vport, struct sk_buff *skb)
 {
 	int hlen;
+
+	if (unlikely(OVS_CB(skb)->is_layer3))
+		return -EINVAL;
 
 	if (unlikely(!OVS_CB(skb)->tun_info))
 		return -EINVAL;
