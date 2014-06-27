@@ -72,7 +72,7 @@ static void vxlan_rcv(struct vxlan_sock *vs, struct sk_buff *skb, __be32 vx_vni)
 			       udp_hdr(skb)->source, udp_hdr(skb)->dest,
 			       key, TUNNEL_KEY, NULL, 0);
 
-	ovs_vport_receive(vport, skb, &tun_info);
+	ovs_vport_receive(vport, skb, &tun_info, false);
 }
 
 static int vxlan_get_options(const struct vport *vport, struct sk_buff *skb)
@@ -150,6 +150,11 @@ static int vxlan_tnl_send(struct vport *vport, struct sk_buff *skb)
 	__be32 saddr;
 	__be16 df;
 	int err;
+
+	if (unlikely(OVS_CB(skb)->is_layer3)) {
+		err = -EINVAL;
+		goto error;
+	}
 
 	if (unlikely(!OVS_CB(skb)->egress_tun_info)) {
 		err = -EINVAL;

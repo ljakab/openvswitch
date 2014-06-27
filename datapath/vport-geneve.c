@@ -200,7 +200,7 @@ static int geneve_rcv(struct sock *sk, struct sk_buff *skb)
 				key, flags,
 				geneveh->options, opts_len);
 
-	ovs_vport_receive(vport_from_priv(geneve_port), skb, &tun_info);
+	ovs_vport_receive(vport_from_priv(geneve_port), skb, &tun_info, false);
 	goto out;
 
 error:
@@ -364,6 +364,10 @@ static int geneve_send(struct vport *vport, struct sk_buff *skb)
 	__be16 df;
 	int sent_len;
 	int err;
+
+	if (unlikely(OVS_CB(skb)->is_layer3)) {
+		return -EINVAL;
+	}
 
 	if (unlikely(!OVS_CB(skb)->egress_tun_info))
 		return -EINVAL;
