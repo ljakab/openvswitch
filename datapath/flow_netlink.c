@@ -1882,6 +1882,10 @@ static int __ovs_nla_copy_actions(const struct nlattr *attr,
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_ETH:
+			/* For now disallow pushing an Ethernet header if one
+			 * is already present */
+			if (!noeth)
+				return -EINVAL;
 			noeth = false;
 			break;
 
