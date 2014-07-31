@@ -120,7 +120,9 @@ static bool match_validate(const struct sw_flow_match *match,
 	/* The following mask attributes allowed only if they
 	 * pass the validation tests.
 	 */
-	mask_allowed &= ~((1ULL << OVS_KEY_ATTR_TCP)
+	mask_allowed &= ~((1ULL << OVS_KEY_ATTR_IPV4)
+			| (1ULL << OVS_KEY_ATTR_IPV6)
+			| (1ULL << OVS_KEY_ATTR_TCP)
 			| (1ULL << OVS_KEY_ATTR_TCP_FLAGS)
 			| (1ULL << OVS_KEY_ATTR_UDP)
 			| (1ULL << OVS_KEY_ATTR_SCTP)
