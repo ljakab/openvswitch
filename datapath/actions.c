@@ -338,9 +338,9 @@ static int set_eth_addr(struct sk_buff *skb, struct sw_flow_key *key,
 
 static int pop_eth(struct sk_buff *skb)
 {
-	skb_pull_rcsum(skb, skb_network_offset(skb));
+	skb_pull_rcsum(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
-	vlan_set_tci(skb, 0);
+	skb->mac_len -= ETH_HLEN;
 
 	OVS_CB(skb)->is_layer3 = true;
 
@@ -351,6 +351,7 @@ static void push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh
 {
 	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
+	skb_reset_mac_len(skb);
 
 	ether_addr_copy(eth_hdr(skb)->h_source, ethh->addresses.eth_src);
 	ether_addr_copy(eth_hdr(skb)->h_dest, ethh->addresses.eth_dst);
