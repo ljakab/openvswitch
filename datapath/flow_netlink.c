@@ -133,10 +133,7 @@ static bool match_validate(const struct sw_flow_match *match,
 	/* Always allowed mask fields. */
 	mask_allowed |= ((1ULL << OVS_KEY_ATTR_TUNNEL)
 		       | (1ULL << OVS_KEY_ATTR_IN_PORT)
-		       | (1ULL << OVS_KEY_ATTR_ETHERNET)
-		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE)
-		       | (1ULL << OVS_KEY_ATTR_IPV4)
-		       | (1ULL << OVS_KEY_ATTR_IPV6));
+		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE));
 
 	/* Check key attributes. */
 	if (match->key->eth.type == htons(ETH_P_ARP)
