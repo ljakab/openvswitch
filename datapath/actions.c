@@ -347,21 +347,38 @@ static int pop_eth(struct sk_buff *skb)
 	return 0;
 }
 
-static void push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
+static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
 {
+	/* De-accelerate any hardware accelerated VLAN tag added to a previous
+	 * Ethernet header */
+	if (unlikely(vlan_tx_tag_present(skb))) {
+		u16 tx_tag = vlan_tx_tag_get(skb);
+
+		if (!__vlan_put_tag(skb, skb->vlan_proto, tx_tag))
+			return -ENOMEM;
+
+		if (skb->ip_summed == CHECKSUM_COMPLETE)
+			skb->csum = csum_add(skb->csum, csum_partial(skb->data
+					+ (2 * ETH_ALEN), VLAN_HLEN, 0));
+	}
+
+	/* Add the new Ethernet header */
+	if (skb_cow_head(skb, ETH_HLEN) < 0)
+		return -ENOMEM;
+
 	skb_push(skb, ETH_HLEN);
 	skb_reset_mac_header(skb);
 	skb_reset_mac_len(skb);
 
 	ether_addr_copy(eth_hdr(skb)->h_source, ethh->addresses.eth_src);
 	ether_addr_copy(eth_hdr(skb)->h_dest, ethh->addresses.eth_dst);
-
 	eth_hdr(skb)->h_proto = ethh->eth_type;
-	skb->protocol = ethh->eth_type;
 
 	ovs_skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
 
+	skb->protocol = ethh->eth_type;
 	OVS_CB(skb)->is_layer3 = false;
+	return 0;
 }
 
 static void set_ip_addr(struct sk_buff *skb, struct iphdr *nh,
@@ -925,7 +942,7 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 			break;
 
 		case OVS_ACTION_ATTR_PUSH_ETH:
-			push_eth(skb, nla_data(a));
+			err = push_eth(skb, nla_data(a));
 			break;
 
 		case OVS_ACTION_ATTR_POP_ETH:
