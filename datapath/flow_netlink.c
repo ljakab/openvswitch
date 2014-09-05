@@ -137,6 +137,10 @@ static bool match_validate(const struct sw_flow_match *match,
 		       | (1ULL << OVS_KEY_ATTR_IN_PORT)
 		       | (1ULL << OVS_KEY_ATTR_ETHERTYPE));
 
+	/* If Ethertype is present, expect MAC addresses */
+	if (key_attrs & (1ULL << OVS_KEY_ATTR_ETHERTYPE))
+		key_expected |= 1ULL << OVS_KEY_ATTR_ETHERNET;
+
 	/* Check key attributes. */
 	if (match->key->eth.type == htons(ETH_P_ARP)
 			|| match->key->eth.type == htons(ETH_P_RARP)) {
