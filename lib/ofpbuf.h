@@ -358,7 +358,7 @@ static inline const void *ofpbuf_get_icmp_payload(const struct ofpbuf *b)
 
 static inline bool ofpbuf_is_layer3_packet(const struct ofpbuf *b)
 {
-    return (b->frame == b->data_) && (b->l3_ofs == 0);
+    return (b->frame == ofpbuf_data(b)) && (b->l3_ofs == 0);
 }
 
 #ifdef DPDK_NETDEV
