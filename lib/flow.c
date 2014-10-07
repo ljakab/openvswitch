@@ -866,11 +866,14 @@ void flow_wildcards_init_for_packet(struct flow_wildcards *wc,
     WC_MASK_FIELD(wc, recirc_id);
     WC_MASK_FIELD(wc, dp_hash);
     WC_MASK_FIELD(wc, in_port);
+    WC_MASK_FIELD(wc, base_layer);
 
-    WC_MASK_FIELD(wc, dl_dst);
-    WC_MASK_FIELD(wc, dl_src);
     WC_MASK_FIELD(wc, dl_type);
-    WC_MASK_FIELD(wc, vlan_tci);
+    if (flow->base_layer == LAYER_2) {
+        WC_MASK_FIELD(wc, dl_dst);
+        WC_MASK_FIELD(wc, dl_src);
+        WC_MASK_FIELD(wc, vlan_tci);
+    }
 
     if (flow->dl_type == htons(ETH_TYPE_IP)) {
         WC_MASK_FIELD(wc, nw_src);
