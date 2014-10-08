@@ -257,6 +257,27 @@ static int __pop_vlan_tci(struct sk_buff *skb, __be16 *current_tci)
 	return 0;
 }
 
+/* De-accelerate any hardware accelerated VLAN tag present in skb. */
+static int deaccel_vlan_tx_tag(struct sk_buff *skb)
+{
+	u16 current_tag;
+
+	/* push down current VLAN tag */
+	current_tag = vlan_tx_tag_get(skb);
+
+	if (!__vlan_put_tag(skb, skb->vlan_proto, current_tag))
+		return -ENOMEM;
+
+	/* Update mac_len for subsequent MPLS actions */
+	skb->mac_len += VLAN_HLEN;
+
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_add(skb->csum, csum_partial(skb->data
+				+ (2 * ETH_ALEN), VLAN_HLEN, 0));
+
+	return 0;
+}
+
 static int pop_vlan(struct sk_buff *skb, struct sw_flow_key *key)
 {
 	__be16 tci;
@@ -293,20 +314,10 @@ static int push_vlan(struct sk_buff *skb, struct sw_flow_key *key,
 		     const struct ovs_action_push_vlan *vlan)
 {
 	if (unlikely(vlan_tx_tag_present(skb))) {
-		u16 current_tag;
-
-		/* push down current VLAN tag */
-		current_tag = vlan_tx_tag_get(skb);
-
-		if (!__vlan_put_tag(skb, skb->vlan_proto, current_tag))
-			return -ENOMEM;
-
-		/* Update mac_len for subsequent MPLS actions */
-		skb->mac_len += VLAN_HLEN;
-
-		if (skb->ip_summed == CHECKSUM_COMPLETE)
-			skb->csum = csum_add(skb->csum, csum_partial(skb->data
-					+ (2 * ETH_ALEN), VLAN_HLEN, 0));
+		int err;
+		err = deaccel_vlan_tx_tag(skb);
+		if (unlikely(err))
+			return err;
 
 		invalidate_flow_key(key);
 	} else {
@@ -352,14 +363,10 @@ static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
 	/* De-accelerate any hardware accelerated VLAN tag added to a previous
 	 * Ethernet header */
 	if (unlikely(vlan_tx_tag_present(skb))) {
-		u16 tx_tag = vlan_tx_tag_get(skb);
-
-		if (!__vlan_put_tag(skb, skb->vlan_proto, tx_tag))
-			return -ENOMEM;
-
-		if (skb->ip_summed == CHECKSUM_COMPLETE)
-			skb->csum = csum_add(skb->csum, csum_partial(skb->data
-					+ (2 * ETH_ALEN), VLAN_HLEN, 0));
+		int err;
+		err = deaccel_vlan_tx_tag(skb);
+		if (unlikely(err))
+			return err;
 	}
 
 	/* Add the new Ethernet header */
