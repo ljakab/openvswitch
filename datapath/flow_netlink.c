@@ -1879,7 +1879,7 @@ static int __ovs_nla_copy_actions(const struct nlattr *attr,
 		case OVS_ACTION_ATTR_POP_ETH:
 			if (noeth)
 				return -EINVAL;
-			if (vlan_tci != htons(0))
+			if (vlan_tci & htons(VLAN_TAG_PRESENT))
 				return -EINVAL;
 			noeth = true;
 			break;

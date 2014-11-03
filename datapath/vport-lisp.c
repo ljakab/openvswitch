@@ -443,8 +443,9 @@ static int lisp_send(struct vport *vport, struct sk_buff *skb)
 
 	tun_key = &OVS_CB(skb)->egress_tun_info->tunnel;
 
-	if (skb->protocol != htons(ETH_P_IP) &&
-	    skb->protocol != htons(ETH_P_IPV6)) {
+	if ((skb->protocol != htons(ETH_P_IP) &&
+	    skb->protocol != htons(ETH_P_IPV6)) ||
+	    skb->vlan_tci & htons(VLAN_TAG_PRESENT)) {
 		kfree_skb(skb);
 		return 0;
 	}
