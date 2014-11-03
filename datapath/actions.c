@@ -353,8 +353,6 @@ static int pop_eth(struct sk_buff *skb)
 	skb_reset_mac_header(skb);
 	skb->mac_len -= ETH_HLEN;
 
-	OVS_CB(skb)->is_layer3 = true;
-
 	return 0;
 }
 
@@ -384,7 +382,6 @@ static int push_eth(struct sk_buff *skb, const struct ovs_action_push_eth *ethh)
 	ovs_skb_postpush_rcsum(skb, skb->data, ETH_HLEN);
 
 	skb->protocol = ethh->eth_type;
-	OVS_CB(skb)->is_layer3 = false;
 	return 0;
 }
 

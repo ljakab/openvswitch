@@ -234,9 +234,6 @@ static int netdev_send(struct vport *vport, struct sk_buff *skb)
 	int mtu = netdev_vport->dev->mtu;
 	int len;
 
-	if (unlikely(OVS_CB(skb)->is_layer3))
-		return -EINVAL;
-
 	if (unlikely(packet_length(skb) > mtu && !skb_is_gso(skb))) {
 		net_warn_ratelimited("%s: dropped over-mtu packet: %d > %d\n",
 				     netdev_vport->dev->name,

@@ -248,9 +248,6 @@ static int internal_dev_recv(struct vport *vport, struct sk_buff *skb)
 		return 0;
 	}
 
-	if (unlikely(OVS_CB(skb)->is_layer3))
-		return -EINVAL;
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,37)
 	if (vlan_tx_tag_present(skb)) {
 		if (unlikely(!__vlan_put_tag(skb,

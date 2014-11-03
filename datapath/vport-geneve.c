@@ -365,10 +365,6 @@ static int geneve_send(struct vport *vport, struct sk_buff *skb)
 	int sent_len;
 	int err;
 
-	if (unlikely(OVS_CB(skb)->is_layer3)) {
-		return -EINVAL;
-	}
-
 	if (unlikely(!OVS_CB(skb)->egress_tun_info))
 		return -EINVAL;
 

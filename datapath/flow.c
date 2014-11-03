@@ -459,15 +459,10 @@ static int key_extract(struct sk_buff *skb, struct sw_flow_key *key)
 	skb_reset_mac_header(skb);
 
 	/* Link layer. */
-	if (OVS_CB(skb)->is_layer3) {
-		/* The receiving L3 vport should set the inner packet protocol
-		 * on the skb.  We use that here to set eth.type
-		 */
-		key->phy.noeth = true;
+	if (key->phy.noeth) {
 		key->eth.tci = 0;
 		key->eth.type = skb->protocol;
 	} else {
-		key->phy.noeth = false;
 		eth = eth_hdr(skb);
 		ether_addr_copy(key->eth.src, eth->h_source);
 		ether_addr_copy(key->eth.dst, eth->h_dest);
@@ -690,7 +685,8 @@ int ovs_flow_key_update(struct sk_buff *skb, struct sw_flow_key *key)
 
 int ovs_flow_key_extract(const struct ovs_tunnel_info *tun_info,
 			 struct sk_buff *skb,
-			 struct sw_flow_key *key)
+			 struct sw_flow_key *key,
+			 bool is_layer3)
 {
 	/* Extract metadata from packet. */
 	if (tun_info) {
@@ -714,6 +710,7 @@ int ovs_flow_key_extract(const struct ovs_tunnel_info *tun_info,
 	key->phy.priority = skb->priority;
 	key->phy.in_port = OVS_CB(skb)->input_vport->port_no;
 	key->phy.skb_mark = skb->mark;
+	key->phy.noeth = is_layer3;
 	key->ovs_flow_hash = 0;
 	key->recirc_id = 0;
 

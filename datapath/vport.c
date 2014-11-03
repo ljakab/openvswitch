@@ -461,8 +461,7 @@ void ovs_vport_receive(struct vport *vport, struct sk_buff *skb,
 	ovs_skb_init_inner_protocol(skb);
 	OVS_CB(skb)->input_vport = vport;
 	OVS_CB(skb)->egress_tun_info = NULL;
-	OVS_CB(skb)->is_layer3 = is_layer3;
-	error = ovs_flow_key_extract(tun_info, skb, &key);
+	error = ovs_flow_key_extract(tun_info, skb, &key, is_layer3);
 	if (unlikely(error)) {
 		kfree_skb(skb);
 		return;

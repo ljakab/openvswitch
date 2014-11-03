@@ -151,11 +151,6 @@ static int vxlan_tnl_send(struct vport *vport, struct sk_buff *skb)
 	__be16 df;
 	int err;
 
-	if (unlikely(OVS_CB(skb)->is_layer3)) {
-		err = -EINVAL;
-		goto error;
-	}
-
 	if (unlikely(!OVS_CB(skb)->egress_tun_info)) {
 		err = -EINVAL;
 		goto error;

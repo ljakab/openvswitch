@@ -254,7 +254,8 @@ void ovs_flow_stats_clear(struct sw_flow *);
 u64 ovs_flow_used_time(unsigned long flow_jiffies);
 
 int ovs_flow_key_extract(const struct ovs_tunnel_info *tun_info,
-			 struct sk_buff *skb, struct sw_flow_key *key);
+			 struct sk_buff *skb, struct sw_flow_key *key,
+			 bool is_layer3);
 /* Extract key from packet coming from userspace. */
 int ovs_flow_key_extract_userspace(const struct nlattr *attr,
 				   struct sk_buff *skb,
